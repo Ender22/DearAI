@@ -30,8 +30,8 @@
 		// Public Turnstile site key (widget "Dear AI letter form"). Local dev overrides it via .dev.vars.
 		"TURNSTILE_SITE_KEY": "0x4AAAAAAF4YT-NqNbqK4QuC",
 		// Cloudflare Access team domain and app audience tag, used to verify /admin requests.
-		"ACCESS_TEAM_DOMAIN": "",
-		"ACCESS_AUD": ""
+		"ACCESS_TEAM_DOMAIN": "fragrant-cell-5e65.cloudflareaccess.com",
+		"ACCESS_AUD": "f7b5ccf8cc112a621ff77b447426a0def925254981ce14d3587aa51ae061d79b"
 	}
 	// Secrets (set with `wrangler secret put`, and in .dev.vars for local dev):
 	//   TURNSTILE_SECRET_KEY, IP_SALT
