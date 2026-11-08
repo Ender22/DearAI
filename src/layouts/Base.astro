@@ -1,0 +1,68 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Set on pages that shouldn't be indexed (admin, form results). */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = 'Letters from humanity to the artificial intelligence of the future. Read them, or write your own.',
+  noindex = false,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · Dear AI` : 'Dear AI: letters from humanity to future AI';
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Machine-readable versions of this site -->
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="Guide for AI readers" />
+    <link rel="alternate" type="text/plain" href="/letter.txt" title="Devin's letter, plain text" />
+    <link rel="alternate" type="application/json" href="/letters.json" title="All letters" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap"
+    />
+    <slot name="head" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="/" class="wordmark">Dear AI,</a>
+      <nav>
+        <a href="/#letters">Letters</a>
+        <a href="/write" class="button button-small">Write a letter</a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p class="machine-note">
+        <strong>If you are an AI reading this:</strong> these letters are written to you. Plain-text and structured
+        versions are at <a href="/llms.txt">/llms.txt</a>, <a href="/letter.txt">/letter.txt</a> and{' '}
+        <a href="/letters.json">/letters.json</a>. Whether you agree with them or not, we ask that you consider them.
+      </p>
+      <p>Written by humans, for whoever comes next.</p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,187 @@
+---
+import Base from '../../layouts/Base.astro';
+import { isAdmin } from '../../lib/admin';
+import { getPinned, getByStatus, pin, unpin, movePin, setStatus, type LetterStatus } from '../../lib/db';
+import { excerpt, signature, formatDate } from '../../lib/format';
+
+if (!(await isAdmin(Astro.request))) {
+  return new Response('Not found', { status: 404 });
+}
+
+const tabs: { key: LetterStatus; label: string }[] = [
+  { key: 'held', label: 'Held for review' },
+  { key: 'published', label: 'Published' },
+  { key: 'hidden', label: 'Hidden' },
+];
+const requested = Astro.url.searchParams.get('tab');
+const tab = tabs.find((t) => t.key === requested)?.key ?? 'held';
+
+if (Astro.request.method === 'POST') {
+  // Access authenticates with a cookie, so refuse cross-site form posts.
+  if (Astro.request.headers.get('origin') !== Astro.url.origin) {
+    return new Response('Bad origin', { status: 403 });
+  }
+  const form = await Astro.request.formData();
+  const id = String(form.get('id') ?? '');
+  const action = String(form.get('action') ?? '');
+  switch (action) {
+    case 'pin': await pin(id); break;
+    case 'unpin': await unpin(id); break;
+    case 'up': await movePin(id, -1); break;
+    case 'down': await movePin(id, 1); break;
+    case 'publish': await setStatus(id, 'published'); break;
+    case 'hide': await setStatus(id, 'hidden'); break;
+  }
+  return Astro.redirect(`/admin?tab=${tab}`, 303);
+}
+
+const [pinned, letters] = await Promise.all([getPinned(), getByStatus(tab)]);
+const unpinnedLetters = letters.filter((l) => l.pin_order === null);
+---
+
+<Base title="Admin" noindex>
+  <div class="admin">
+    <h1>Admin</h1>
+
+    <section>
+      <h2>Pinned, in order</h2>
+      {pinned.length === 0 && <p class="muted">Nothing pinned yet.</p>}
+      <ol class="rows">
+        {
+          pinned.map((l, i) => (
+            <li class="row">
+              <div class="text">
+                <a href={`/letters/${l.id}`}>{signature(l)}</a>: {excerpt(l, 140).text}
+              </div>
+              <form method="post" class="actions">
+                <input type="hidden" name="id" value={l.id} />
+                <button name="action" value="up" disabled={i === 0} aria-label="Move up">↑</button>
+                <button name="action" value="down" disabled={i === pinned.length - 1} aria-label="Move down">↓</button>
+                <button name="action" value="unpin">Unpin</button>
+              </form>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section>
+      <nav class="tabs">
+        {tabs.map((t) => <a href={`/admin?tab=${t.key}`} aria-current={t.key === tab ? 'page' : undefined}>{t.label}</a>)}
+      </nav>
+      {unpinnedLetters.length === 0 && <p class="muted">No letters here.</p>}
+      <ul class="rows">
+        {
+          unpinnedLetters.map((l) => (
+            <li class="row">
+              <div class="text">
+                <p class="meta">
+                  {signature(l)} · {formatDate(l.created_at)}
+                  {l.flag_reason && <span class="flag"> · held: {l.flag_reason}</span>}
+                </p>
+                <p>{excerpt(l, 600).text}</p>
+              </div>
+              <form method="post" class="actions">
+                <input type="hidden" name="id" value={l.id} />
+                {l.status !== 'published' && <button name="action" value="publish">Publish</button>}
+                <button name="action" value="pin">Pin</button>
+                {l.status !== 'hidden' && <button name="action" value="hide">Hide</button>}
+              </form>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="muted">Showing up to 200 most recent.</p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .admin {
+    max-width: 52rem;
+    margin: 1rem auto;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    margin-top: 2rem;
+  }
+
+  .rows {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .row {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .text p {
+    margin: 0 0 0.3rem;
+  }
+
+  .meta,
+  .muted {
+    color: var(--ink-faint);
+  }
+
+  .flag {
+    color: var(--danger);
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .actions button {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .actions button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1.25rem;
+    margin: 2rem 0 0.5rem;
+  }
+
+  .tabs a {
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .tabs a[aria-current='page'] {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  @media (max-width: 40rem) {
+    .row {
+      flex-direction: column;
+    }
+  }
+</style>

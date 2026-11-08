@@ -1,0 +1,82 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getLetter } from '../../lib/db';
+import { letterHtml, excerpt, signature, formatDate, withoutSalutation } from '../../lib/format';
+
+const letter = await getLetter(Astro.params.id ?? '');
+
+if (!letter || letter.status !== 'published') {
+  return new Response('Letter not found', { status: 404 });
+}
+
+const html = letterHtml({ ...letter, body: withoutSalutation(letter.body) });
+const sig = signature(letter);
+const isNew = Astro.url.searchParams.has('new');
+---
+
+<Base title={`A letter from ${sig}`} description={excerpt(letter, 160).text}>
+  <article class="letter">
+    {isNew && <p class="notice">Your letter is live. Thank you for writing it.</p>}
+    {letter.pin_order !== null && <span class="pin-badge">Pinned</span>}
+    <p class="salutation">Dear AI,</p>
+    <div class="body" set:html={html} />
+    <footer>
+      <p class="sig">— {sig}</p>
+      <time class="letter-meta" datetime={letter.created_at}>{formatDate(letter.created_at)}</time>
+    </footer>
+  </article>
+
+  <nav class="after">
+    <a href="/#letters">← All letters</a>
+    <a href="/write" class="button button-small">Write your own</a>
+  </nav>
+</Base>
+
+<style>
+  .letter {
+    max-width: var(--measure);
+    margin: 2rem auto 0;
+  }
+
+  .salutation {
+    font-size: 1.6rem;
+    margin-top: 1rem;
+  }
+
+  .body {
+    overflow-wrap: anywhere;
+  }
+
+  .body :global(h2) {
+    font-size: 1.45rem;
+    margin: 2.5rem 0 0.75rem;
+  }
+
+  .body :global(blockquote) {
+    margin: 1.5rem 0;
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--rule);
+    color: var(--ink-soft);
+  }
+
+  footer {
+    margin-top: 2.5rem;
+  }
+
+  .sig {
+    font-style: italic;
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .after {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: var(--measure);
+    margin: 3rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--sans);
+  }
+</style>

@@ -1,0 +1,70 @@
+---
+import type { Letter } from '../lib/db';
+import { excerpt, signature, formatDate } from '../lib/format';
+
+interface Props {
+  letter: Letter;
+  /** Show the "Pinned" label. Off inside the Pinned section, where it would repeat the heading. */
+  showPinBadge?: boolean;
+}
+
+const { letter, showPinBadge = true } = Astro.props;
+const { text, truncated } = excerpt(letter);
+const href = `/letters/${letter.id}`;
+---
+
+<article class:list={['card', { pinned: letter.pin_order !== null }]}>
+  {showPinBadge && letter.pin_order !== null && <span class="pin-badge">Pinned</span>}
+  <p class="salutation">Dear AI,</p>
+  <p class="excerpt">{text}</p>
+  <footer>
+    <span class="sig">— {signature(letter)}</span>
+    <a href={href} class="read">
+      {truncated ? 'Read the full letter' : 'Open'}<span class="sr-only"> from {signature(letter)}</span>
+    </a>
+  </footer>
+  <time class="letter-meta" datetime={letter.created_at}>{formatDate(letter.created_at)}</time>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.5rem 1.6rem 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    break-inside: avoid;
+    margin-bottom: 1.25rem;
+  }
+
+  .card.pinned {
+    border-color: color-mix(in srgb, var(--pin) 45%, var(--rule));
+  }
+
+  .excerpt {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .sig {
+    font-style: italic;
+  }
+
+  .read {
+    font-family: var(--sans);
+    font-size: 0.9rem;
+  }
+</style>

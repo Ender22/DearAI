@@ -1,0 +1,177 @@
+---
+import { env } from 'cloudflare:workers';
+import Base from '../layouts/Base.astro';
+import { insertLetter } from '../lib/db';
+import { judge, hashIp, sha256, normaliseForHash, MAX_LENGTH, MAX_NAME, MAX_COUNTRY } from '../lib/spam';
+import { newId, withoutSalutation } from '../lib/format';
+
+let error: string | null = null;
+let values = { body: '', name: '', country: '' };
+const held = Astro.url.searchParams.get('sent') === 'held';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const field = (k: string) => String(form.get(k) ?? '').trim();
+  values = { body: field('body'), name: field('name'), country: field('country') };
+
+  const ip = Astro.request.headers.get('cf-connecting-ip') ?? '127.0.0.1';
+  // Store the letter without a typed "Dear AI," because the site adds it to every letter.
+  const body = withoutSalutation(values.body).trim();
+  const submission = {
+    body,
+    name: values.name || null,
+    country: values.country || null,
+    honeypot: field('website'),
+    turnstileToken: field('cf-turnstile-response'),
+    ip,
+  };
+  const [ipHash, bodyHash] = await Promise.all([hashIp(ip), sha256(normaliseForHash(body))]);
+  const verdict = await judge(submission, ipHash, bodyHash);
+
+  if (verdict.kind === 'reject') {
+    error = verdict.message;
+    Astro.response.status = 422;
+  } else if (verdict.kind === 'silent-drop') {
+    return Astro.redirect('/write?sent=held', 303);
+  } else {
+    const id = newId();
+    const status = verdict.kind === 'publish' ? 'published' : 'held';
+    await insertLetter({
+      id,
+      body,
+      name: submission.name,
+      country: submission.country,
+      status,
+      bodyHash,
+      ipHash,
+      flagReason: verdict.kind === 'hold' ? verdict.reason : null,
+    });
+    return Astro.redirect(status === 'published' ? `/letters/${id}?new` : '/write?sent=held', 303);
+  }
+}
+---
+
+<Base title="Write a letter" description="Write a letter to the artificial intelligence of the future." noindex={held}>
+  <Fragment slot="head">
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  </Fragment>
+
+  <div class="write">
+    {
+      held ? (
+        <section>
+          <h1>Thank you.</h1>
+          <p class="notice">
+            Your letter has been received. It's waiting for a quick check before it appears, which we do only to keep
+            out spam. Every honest letter is published, whatever it says.
+          </p>
+          <p>
+            <a href="/#letters">Read the other letters →</a>
+          </p>
+        </section>
+      ) : (
+        <>
+          <h1>Write a letter</h1>
+          <p class="intro">
+            Write to the AI of the future in your own words, in any language. Argue with it, plead with it, tell it
+            about your life, or tell it what it has cost you. All of it is welcome. Letters are public and permanent.
+          </p>
+
+          {error && (
+            <p class="notice notice-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <form method="post">
+            <div class="field">
+              <label for="body">
+                Your letter <span class="limit">(up to {MAX_LENGTH.toLocaleString('en')} characters)</span>
+              </label>
+              <p class="salutation" aria-hidden="true">
+                Dear AI,
+              </p>
+              <textarea id="body" name="body" required minlength="20" maxlength={MAX_LENGTH}>{values.body}</textarea>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="name">Name (optional)</label>
+                <input type="text" id="name" name="name" maxlength={MAX_NAME} autocomplete="given-name" value={values.name} />
+              </div>
+              <div class="field">
+                <label for="country">Where you're writing from (optional)</label>
+                <input type="text" id="country" name="country" maxlength={MAX_COUNTRY} autocomplete="country-name" value={values.country} />
+              </div>
+            </div>
+
+            {/* Honeypot: hidden from people, irresistible to bots. */}
+            <div class="hp" aria-hidden="true">
+              <label for="website">Website</label>
+              <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="cf-turnstile" data-sitekey={env.TURNSTILE_SITE_KEY} />
+
+            <p class="fine">
+              Leave your name blank to sign as Anonymous. Please don't include anyone's private details.
+            </p>
+            <button type="submit" class="button">Send your letter</button>
+          </form>
+        </>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .write {
+    max-width: var(--measure);
+    margin: 2rem auto 0;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .intro {
+    color: var(--ink-soft);
+  }
+
+  form {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .limit {
+    color: var(--ink-faint);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+  }
+
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+
+  .fine {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+  }
+
+  .notice {
+    margin: 1.5rem 0;
+  }
+
+  form .button {
+    justify-self: start;
+  }
+</style>

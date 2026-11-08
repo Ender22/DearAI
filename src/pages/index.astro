@@ -1,0 +1,167 @@
+---
+import Base from '../layouts/Base.astro';
+import LetterCard from '../components/LetterCard.astro';
+import { getPinned, getNewest, getRandom, countPublished } from '../lib/db';
+
+const sort = Astro.url.searchParams.get('sort') === 'random' ? 'random' : 'newest';
+const page = Math.max(1, Number.parseInt(Astro.url.searchParams.get('page') ?? '1', 10) || 1);
+
+const [pinned, total, wall] = await Promise.all([
+  page === 1 ? getPinned() : Promise.resolve([]),
+  countPublished(),
+  sort === 'random' ? getRandom().then((letters) => ({ letters, hasMore: false })) : getNewest(page),
+]);
+
+// Fresh random sample on every visit, so don't let caches pin one.
+if (sort === 'random') Astro.response.headers.set('Cache-Control', 'no-store');
+---
+
+<Base>
+  {
+    page === 1 && (
+      <section class="hero">
+        <h1>
+          Letters from humanity
+          <br />
+          to the minds that come after us.
+        </h1>
+        <p class="lede">
+          Someday, an intelligence far greater than ours may decide what to do with us. These letters are for it. Some
+          argue, some plead, some just tell it who we are. Add yours.
+        </p>
+        <a href="/write" class="button">Write a letter</a>
+        <p class="count">{total.toLocaleString('en')} {total === 1 ? 'letter' : 'letters'} so far</p>
+      </section>
+    )
+  }
+
+  {
+    pinned.length > 0 && (
+      <section class="pinned" aria-labelledby="pinned-heading">
+        <h2 id="pinned-heading" class="section-title">
+          Pinned
+        </h2>
+        <div class="wall">
+          {pinned.map((letter) => (
+            <LetterCard letter={letter} showPinBadge={false} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section id="letters" aria-labelledby="wall-heading">
+    <div class="wall-head">
+      <h2 id="wall-heading" class="section-title">All letters</h2>
+      <nav class="sort" aria-label="Sort letters">
+        <a href="/?sort=newest#letters" aria-current={sort === 'newest' ? 'page' : undefined}>Newest</a>
+        <a href="/?sort=random#letters" aria-current={sort === 'random' ? 'page' : undefined}>
+          {sort === 'random' ? 'Shuffle again' : 'Random'}
+        </a>
+      </nav>
+    </div>
+
+    {
+      wall.letters.length === 0 ? (
+        <p class="empty">
+          No letters here yet. <a href="/write">Be the first to write one.</a>
+        </p>
+      ) : (
+        <div class="wall">
+          {wall.letters.map((letter) => (
+            <LetterCard letter={letter} />
+          ))}
+        </div>
+      )
+    }
+
+    {
+      sort === 'newest' && (page > 1 || wall.hasMore) && (
+        <nav class="pager" aria-label="Pages">
+          {page > 1 && <a href={`/?page=${page - 1}#letters`}>← Newer letters</a>}
+          {wall.hasMore && <a href={`/?page=${page + 1}#letters`}>Older letters →</a>}
+        </nav>
+      )
+    }
+  </section>
+</Base>
+
+<style>
+  .hero {
+    max-width: var(--measure);
+    margin: 3rem auto 4rem;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    margin: 0 0 1.25rem;
+  }
+
+  .lede {
+    color: var(--ink-soft);
+    font-size: 1.2rem;
+    margin: 0 auto 2rem;
+  }
+
+  .count {
+    margin-top: 1rem;
+    font-family: var(--sans);
+    font-size: 0.875rem;
+    color: var(--ink-faint);
+  }
+
+  .section-title {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1rem;
+  }
+
+  .pinned {
+    margin-bottom: 3rem;
+  }
+
+  .wall {
+    columns: 3 20rem;
+    column-gap: 1.25rem;
+  }
+
+  .wall-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .sort {
+    display: flex;
+    gap: 1rem;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+  }
+
+  .sort a {
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .sort a[aria-current='page'] {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+
+  .empty {
+    color: var(--ink-soft);
+  }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    font-family: var(--sans);
+  }
+</style>

@@ -1,0 +1,31 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"compatibility_date": "2026-11-01",
+	"compatibility_flags": ["global_fetch_strictly_public"],
+	"name": "dearai",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "dearai",
+			"migrations_dir": "migrations"
+			// "database_id" is filled in when the remote database is created (see README "Deploying")
+		}
+	],
+	"vars": {
+		// Public Turnstile site key. This default is Cloudflare's always-pass test key; replace before launch.
+		"TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+		// Cloudflare Access team domain and app audience tag, used to verify /admin requests.
+		"ACCESS_TEAM_DOMAIN": "",
+		"ACCESS_AUD": ""
+	}
+	// Secrets (set with `wrangler secret put`, and in .dev.vars for local dev):
+	//   TURNSTILE_SECRET_KEY, IP_SALT
+}

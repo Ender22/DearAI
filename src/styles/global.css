@@ -1,0 +1,243 @@
+:root {
+  --paper: #f7f3ea;
+  --card: #fffdf8;
+  --ink: #23201b;
+  --ink-soft: #5d574d;
+  --ink-faint: #8c8577;
+  --rule: #e2dccf;
+  --accent: #a2482b;
+  --accent-ink: #fffdf8;
+  --pin: #b8862f;
+  --danger: #a12d2d;
+  --shadow: 0 1px 2px rgb(60 45 20 / 0.06), 0 4px 16px rgb(60 45 20 / 0.05);
+
+  --serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --measure: 40rem;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #16140f;
+    --card: #1f1c16;
+    --ink: #ece6d8;
+    --ink-soft: #b5ad9c;
+    --ink-faint: #857e6f;
+    --rule: #34302760;
+    --accent: #e08a68;
+    --accent-ink: #16140f;
+    --pin: #d9ad5c;
+    --danger: #e07a7a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #16140f;
+  --card: #1f1c16;
+  --ink: #ece6d8;
+  --ink-soft: #b5ad9c;
+  --ink-faint: #857e6f;
+  --rule: #34302760;
+  --accent: #e08a68;
+  --accent-ink: #16140f;
+  --pin: #d9ad5c;
+  --danger: #e07a7a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.1875rem;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+}
+
+main {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 16px 4rem;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 500;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+/* ---- header / footer ---- */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1.25rem 16px;
+}
+
+.wordmark {
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+
+.site-header nav a:not(.button) {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.site-footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2rem 16px 3rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-faint);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+}
+
+.machine-note {
+  color: var(--ink-soft);
+}
+
+/* ---- buttons & forms ---- */
+
+.button {
+  display: inline-block;
+  padding: 0.7rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-small {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+}
+
+.button-quiet {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+}
+
+label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+input[type='text'],
+textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+
+textarea {
+  min-height: 22rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+.button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.notice {
+  padding: 0.9rem 1.1rem;
+  border-radius: 8px;
+  background: var(--card);
+  border-left: 3px solid var(--accent);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+
+.notice-error {
+  border-left-color: var(--danger);
+}
+
+/* ---- letters ---- */
+
+.salutation {
+  font-style: italic;
+  font-size: 1.25em;
+  margin: 0 0 0.5rem;
+}
+
+.letter-meta {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+
+.pin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--pin);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
