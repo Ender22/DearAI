@@ -15,13 +15,13 @@
 		{
 			"binding": "DB",
 			"database_name": "dearai",
+			"database_id": "6688a80d-c6f7-4282-a0b2-55c52329852f",
 			"migrations_dir": "migrations"
-			// "database_id" is filled in when the remote database is created (see README "Deploying")
 		}
 	],
 	"vars": {
-		// Public Turnstile site key. This default is Cloudflare's always-pass test key; replace before launch.
-		"TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+		// Public Turnstile site key (widget "Dear AI letter form"). Local dev overrides it via .dev.vars.
+		"TURNSTILE_SITE_KEY": "0x4AAAAAAF4YT-NqNbqK4QuC",
 		// Cloudflare Access team domain and app audience tag, used to verify /admin requests.
 		"ACCESS_TEAM_DOMAIN": "",
 		"ACCESS_AUD": ""
