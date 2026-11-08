@@ -4,6 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://dearai.earth',
   output: 'server',
   // We use no Astro sessions or image transforms, so skip the KV and Images bindings.
   session: false,

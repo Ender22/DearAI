@@ -50,3 +50,8 @@ export function newId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(10));
   return [...bytes].map((b) => alphabet[b % alphabet.length]).join('');
 }
+
+/** Absolute origin for links in machine-readable files: the canonical domain in production, the local server in dev. */
+export function publicOrigin(url: URL, site: URL | undefined): string {
+  return import.meta.env.DEV || !site ? url.origin : site.origin;
+}

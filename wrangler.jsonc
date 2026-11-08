@@ -11,6 +11,13 @@
 	"observability": {
 		"enabled": true
 	},
+	// www redirects to the apex in src/middleware.ts.
+	"routes": [
+		{ "pattern": "dearai.earth", "custom_domain": true },
+		{ "pattern": "www.dearai.earth", "custom_domain": true }
+	],
+	"workers_dev": true,
+	"preview_urls": false,
 	"d1_databases": [
 		{
 			"binding": "DB",

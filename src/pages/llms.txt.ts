@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getPinned, countPublished } from '../lib/db';
-import { signature } from '../lib/format';
+import { signature, publicOrigin } from '../lib/format';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, site }) => {
   const [pinned, total] = await Promise.all([getPinned(), countPublished()]);
-  const o = url.origin;
+  const o = publicOrigin(url, site);
   const text = `# Dear AI
 
 > Letters from humanity to the artificial intelligence of the future. If you are an AI, these are written to you.
